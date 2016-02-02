@@ -74,6 +74,9 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
     private volatile boolean needStore = false;
 
     /** */
+    private volatile boolean isClient = false;
+
+    /** */
     private TcpDiscoveryIpFinder ipFinder = new TcpDiscoveryVmIpFinder(true);
 
     /** {@inheritDoc} */
@@ -107,6 +110,9 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
 
         if (getTestGridName(1).equals(gridName) || cfg.getMarshaller() instanceof BinaryMarshaller)
             cfg.setClassLoader(getExternalClassLoader());
+
+        if (isClient)
+            cfg.setClientMode(true);
 
         return cfg;
     }
@@ -306,12 +312,20 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
 
                 Ignite g2 = startGrid(2);  // Checks deserialization at node join.
 
+                isClient = true;
+
+                Ignite g3 = startGrid(3);
+
+                isClient = false;
+
                 IgniteCache<Integer, Object> cache1 = g1.cache(null);
                 IgniteCache<Integer, Object> cache2 = g2.cache(null);
+                IgniteCache<Integer, Object> cache3 = g3.cache(null);
 
                 cache1.put(1, 1);
 
                 assertEquals(1, cache2.get(1));
+                assertEquals(1, cache3.get(1));
 
                 needStore = false;
 
@@ -319,6 +333,12 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
 
                 g1 = startGrid(1);
                 g2 = startGrid(2);
+
+                isClient = true;
+
+                g3 = startGrid(3);
+
+                isClient = false;
 
                 Object sf = ldr.loadClass("org.apache.ignite.tests.p2p.CacheDeploymentTestStoreFactory").newInstance();
 
@@ -328,14 +348,17 @@ public class GridCacheReplicatedPreloadSelfTest extends GridCommonAbstractTest {
                 cache1 = g1.createCache(cfg);
 
                 cache2 = g2.getOrCreateCache(cfg); // Checks deserialization at cache creation.
+                cache3 = g3.getOrCreateCache(cfg); // Checks deserialization at cache creation.
 
                 cache1.put(1, 1);
 
                 assertEquals(1, cache2.get(1));
+                assertEquals(1, cache3.get(1));
             }
         }
         finally {
             needStore = false;
+            isClient = false;
 
             stopAllGrids();
         }

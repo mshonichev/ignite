@@ -18,6 +18,7 @@ package org.apache.ignite.internal.processors.cache;
 
 import java.util.Collection;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.internal.IgniteInternalFuture;
 import org.apache.ignite.internal.processors.affinity.AffinityTopologyVersion;
@@ -167,11 +168,10 @@ public interface GridCachePreloader {
     /**
      * Handles Supply message.
      *
-     * @param idx Index.
      * @param id Node Id.
      * @param s Supply message.
      */
-    public void handleSupplyMessage(int idx, UUID id, final GridDhtPartitionSupplyMessage s);
+    public void handleSupplyMessage(UUID id, final GridDhtPartitionSupplyMessage s);
 
     /**
      * Handles Demand message.
@@ -193,12 +193,7 @@ public interface GridCachePreloader {
     public void dumpDebugInfo();
 
     /**
-     *  Pause preloader.
+     *  Preloader's lock.
      */
-    public void pause();
-
-    /**
-     * Resume preloader.
-     */
-    public void resume();
+    public Lock lock();
 }

@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.expiry.EternalExpiryPolicy;
@@ -3008,46 +3009,50 @@ public class GridCacheProcessor extends GridProcessorAdapter {
 
         try {
             doInParallel(
-                    parallelismLvl,
-                    sharedCtx.kernalContext().getSystemExecutorService(),
-                    cachesToStop.entrySet(),
-                    cachesToStopByGrp -> {
-                        CacheGroupContext gctx = cacheGrps.get(cachesToStopByGrp.getKey());
+                parallelismLvl,
+                sharedCtx.kernalContext().getSystemExecutorService(),
+                cachesToStop.entrySet(),
+                cachesToStopByGrp -> {
+                    CacheGroupContext gctx = cacheGrps.get(cachesToStopByGrp.getKey());
 
-                        if (gctx != null)
-                            gctx.preloader().pause();
+                    Lock lock = null;
 
-                        try {
+                    if (gctx != null)
+                        lock = gctx.preloader().lock();
 
-                            if (gctx != null) {
-                                final String msg = "Failed to wait for topology update, cache group is stopping.";
+                    if (lock != null)
+                        lock.lock();
 
-                                // If snapshot operation in progress we must throw CacheStoppedException
-                                // for correct cache proxy restart. For more details see
-                                // IgniteCacheProxy.cacheException()
-                                gctx.affinity().cancelFutures(new CacheStoppedException(msg));
-                            }
+                    try {
+                        if (gctx != null) {
+                            final String msg = "Failed to wait for topology update, cache group is stopping.";
 
-                            for (ExchangeActions.CacheActionData action: cachesToStopByGrp.getValue()) {
-                                stopGateway(action.request());
-
-                                sharedCtx.database().checkpointReadLock();
-
-                                try {
-                                    prepareCacheStop(action.request().cacheName(), action.request().destroy());
-                                }
-                                finally {
-                                    sharedCtx.database().checkpointReadUnlock();
-                                }
-                            }
-                        }
-                        finally {
-                            if (gctx != null)
-                                gctx.preloader().resume();
+                            // If snapshot operation in progress we must throw CacheStoppedException
+                            // for correct cache proxy restart. For more details see
+                            // IgniteCacheProxy.cacheException()
+                            gctx.affinity().cancelFutures(new CacheStoppedException(msg));
                         }
 
-                        return null;
+                        for (ExchangeActions.CacheActionData action : cachesToStopByGrp.getValue()) {
+                            stopGateway(action.request());
+
+                            sharedCtx.database().checkpointReadLock();
+
+                            try {
+                                prepareCacheStop(action.request().cacheName(), action.request().destroy());
+                            }
+                            finally {
+                                sharedCtx.database().checkpointReadUnlock();
+                            }
+                        }
                     }
+                    finally {
+                        if (lock != null)
+                            lock.unlock();
+                    }
+
+                    return null;
+                }
             );
         }
         catch (IgniteCheckedException e) {

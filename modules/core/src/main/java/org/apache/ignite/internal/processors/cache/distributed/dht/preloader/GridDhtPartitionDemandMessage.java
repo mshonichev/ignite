@@ -178,7 +178,9 @@ public class GridDhtPartitionDemandMessage extends GridCacheGroupIdMessage {
 
     /**
      * @param topic Topic.
+     * @deprecated Useless.
      */
+    @Deprecated
     void topic(Object topic) {
         this.topic = topic;
     }

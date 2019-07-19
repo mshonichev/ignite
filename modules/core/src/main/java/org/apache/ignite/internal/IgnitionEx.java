@@ -1616,6 +1616,9 @@ public class IgnitionEx {
         /** Query executor service. */
         private ThreadPoolExecutor schemaExecSvc;
 
+        /** Query executor service. */
+        private ThreadPoolExecutor rebalanceExecSvc;
+
         /** Executor service. */
         private Map<String, ThreadPoolExecutor> customExecSvcs;
 
@@ -2005,6 +2008,20 @@ public class IgnitionEx {
 
             schemaExecSvc.allowCoreThreadTimeOut(true);
 
+            validateThreadPoolSize(cfg.getRebalanceThreadPoolSize(), "rebalance");
+
+            rebalanceExecSvc = new IgniteThreadPoolExecutor(
+                "rebalance",
+                cfg.getIgniteInstanceName(),
+                0,
+                cfg.getRebalanceThreadPoolSize(),
+                DFLT_THREAD_KEEP_ALIVE_TIME,
+                new LinkedBlockingQueue<>(),
+                GridIoPolicy.REBALANCE_POOL,
+                oomeHnd);
+
+            rebalanceExecSvc.allowCoreThreadTimeOut(true);
+
             if (!F.isEmpty(cfg.getExecutorConfiguration())) {
                 validateCustomExecutorsConfiguration(cfg.getExecutorConfiguration());
 
@@ -2053,6 +2070,7 @@ public class IgnitionEx {
                     callbackExecSvc,
                     qryExecSvc,
                     schemaExecSvc,
+                    rebalanceExecSvc,
                     customExecSvcs,
                     new CA() {
                         @Override public void apply() {
@@ -2682,6 +2700,10 @@ public class IgnitionEx {
             U.shutdownNow(getClass(), schemaExecSvc, log);
 
             schemaExecSvc = null;
+
+            U.shutdownNow(getClass(), rebalanceExecSvc, log);
+
+            rebalanceExecSvc = null;
 
             U.shutdownNow(getClass(), stripedExecSvc, log);
 

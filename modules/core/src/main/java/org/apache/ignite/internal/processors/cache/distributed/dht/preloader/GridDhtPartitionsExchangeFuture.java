@@ -356,7 +356,7 @@ public class GridDhtPartitionsExchangeFuture extends GridDhtTopologyFutureAdapte
     private long startTime = System.nanoTime();
 
     /** Init time of exchange in milliseconds. */
-    private volatile long initTime;
+    public volatile long initTime;
 
     /** Discovery lag / Clocks discrepancy, calculated on coordinator when all single messages are received. */
     private T2<Long, UUID> discoveryLag;

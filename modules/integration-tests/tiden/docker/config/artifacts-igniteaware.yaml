@@ -1,0 +1,4 @@
+artifacts:
+  igniteaware:
+    type: igniteaware
+    glob_path: /opt/ignite-dev/modules/integration-tests/target/ignite-integration-tests-*-SNAPSHOT.jar

@@ -82,7 +82,7 @@ class TestRebalance(AppTestCase):
             "rebalanced=true, wasRebalanced=false",
             nodes_idx=node_idx,
             timeout=self.REBALANCE_TIMEOUT,
-            interval=0.5,
+            interval=0.1,
         )
         data = {"Rebalanced in (sec)": time() - start}
         log_print(repr(data), color='green')

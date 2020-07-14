@@ -78,11 +78,11 @@ class Igniteaware(JavaApp):
         self.stop_nodes()
 
     def extract_result(self, result_name):
-        self.grep_log(
+        res = self.grep_log(
             0,
             result={
                 'remote_regex': result_name + '->',
                 'local_regex': f'{result_name}->(.*)<-'
             }
         )
-        return self.nodes[0]['result']
+        return res[0]['result']

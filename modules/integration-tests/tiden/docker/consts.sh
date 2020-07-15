@@ -18,12 +18,13 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   # "
 
 . ${SCRIPT_DIR}/../consts.sh
+. ${SCRIPT_DIR}/utils.sh
 
 export JDK_VERSION=openjdk:8
 
-export TIDEN_CONFIG_DIR=$(readlink -f ${SCRIPT_DIR}/../../target)/tiden/config
-export TIDEN_VAR_DIR=$(readlink -f ${SCRIPT_DIR}/../../target)/tiden/var
-export IGNITE_SOURCE_DIR=$(readlink -f ${SCRIPT_DIR}/../../../..)
+export TIDEN_CONFIG_DIR=$(readlink_f ${SCRIPT_DIR}/../../target)/tiden/config
+export TIDEN_VAR_DIR=$(readlink_f ${SCRIPT_DIR}/../../target)/tiden/var
+export IGNITE_SOURCE_DIR=$(readlink_f ${SCRIPT_DIR}/../../../..)
 export TIDEN_SUITES_DIR=${IGNITE_SOURCE_DIR}/modules/integration-tests/tiden/suites
 export TIDEN_APPS_DIR=${IGNITE_SOURCE_DIR}/modules/integration-tests/tiden/apps
 

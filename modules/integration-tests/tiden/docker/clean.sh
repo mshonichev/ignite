@@ -20,28 +20,4 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # "
 . ${SCRIPT_DIR}/consts.sh
 . ${SCRIPT_DIR}/utils.sh
 
-run_suite() {
-    local suite="${1}"
-    shift
-    docker exec \
-        --user tiden \
-        tiden-master \
-        bash -c "\
-            cd /home/tiden; \
-            tiden \
-                run-tests \
-                    \$(for i in config/*; do echo \"--tc=\$i\"; done) \
-                    --ts=$suite \
-                    ${@}"
-}
-
-run_ignite_suite() {
-    local suite="${1}"
-    local ignite_version="${2}"
-    run_suite \
-        ${suite} \
-        --to=test_ignite_version=${ignite_version} \
-        --to=xunit_file=xunit_${suite}_${ignite_version/./_}.xml \
-        --to=testrail_report=var/report_${suite}_${ignite_version/./_}.yaml
-}
-
+docker rmi $(docker images -q -f "reference=tiden*")

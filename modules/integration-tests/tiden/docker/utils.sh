@@ -17,18 +17,38 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   # "
 
-. ${SCRIPT_DIR}/consts.sh
-. ${SCRIPT_DIR}/utils.sh
+. ${SCRIPT_DIR}/../utils.sh
 
-# collect all container names which start with 'tiden'
-container_names=$(docker ps -f name=tiden --format '{{.Names}}' -q -a)
+have_volume() {
+  local volume_name="${1}"
 
-if [ ! "$container_names" = "" ]; then
-  log_info "stopping and removing Tiden containers"
-    docker stop $container_names
-    docker rm $container_names
-fi
+  docker volume inspect ${volume_name} >/dev/null 2>/dev/null
+}
 
-log_info "remove dangling images, networks and volumes"
-docker system prune --volumes -f
+have_docker_image() {
+  local image_name="${1}"
+  [ ! "${image_name}" = "" ] \
+  && [ $(docker images -f reference="${image_name}" -q | wc -l) -gt 0 ]
+}
+
+have_docker_container() {
+  local container_name="${1}"
+  docker container inspect ${container_name} >/dev/null 2>/dev/null
+}
+
+stop_and_remove_container() {
+  local container_name="${1}"
+
+  if have_docker_container ${container_name}; then
+      docker stop ${container_name} >/dev/null 2>/dev/null \
+      && docker rm ${container_name} >/dev/null 2>/dev/null
+  fi
+}
+
+remove_docker_image() {
+  local image_name="${1}"
+  if have_docker_image ${image_name}; then
+    docker rmi ${image_name} >/dev/null 2>/dev/null
+  fi
+}
 

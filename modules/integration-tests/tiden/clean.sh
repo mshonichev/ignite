@@ -22,25 +22,9 @@ MAVEN_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   # "
 
 log_info "Running $(basename $0)"
 
-VAR_DIR=$(readlink_f ${MAVEN_SCRIPT_DIR}/../target/tiden/var)
+pushd ${MAVEN_SCRIPT_DIR}/${TIDEN_PROVISION_DRIVER} >/dev/null
 
-if [ ! -d ${VAR_DIR} ]; then
-    log_error "var directory '${VAR_DIR}' not found, run tests first"
-    exit 1
-fi
+./down.sh
+./clean.sh
 
-num_reports=$(find ${VAR_DIR}/ -name "*.yaml" -print | wc -l)
-if [ ${num_reports} -eq 0 ]; then
-    log_error "test run reports not found in '${VAR_DIR}', run tests first"
-    exit 2
-fi
-
-find ${VAR_DIR}/ -name "*.yaml" -print | while read report_name; do
-    log_info "checking ${report_name} ..."
-
-    has_fail=$(cat ${report_name} | grep "last_status: failed" 2>/dev/null | wc -l)
-    if [ ${has_fail} -gt 0 ]; then
-        log_error "failed integration tests detected!"
-        exit 3
-    fi
-done
+popd >/dev/null

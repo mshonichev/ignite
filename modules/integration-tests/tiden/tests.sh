@@ -15,12 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   # "
+MAVEN_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   # "
 
-. $SCRIPT_DIR/consts.sh
+. ${MAVEN_SCRIPT_DIR}/consts.sh
+. ${MAVEN_SCRIPT_DIR}/utils.sh
 
-pushd $SCRIPT_DIR/$TIDEN_PROVISION_DRIVER >/dev/null
+log_info "Running $(basename $0)"
 
-./run-tests.sh
+pushd ${MAVEN_SCRIPT_DIR}/${TIDEN_PROVISION_DRIVER} >/dev/null
+
+. ${MAVEN_SCRIPT_DIR}/${TIDEN_PROVISION_DRIVER}/run-tests.sh
+
+run_tests() {
+    run_ignite_suite benchmarks.test_rebalance 2.8.1
+    run_ignite_suite benchmarks.test_rebalance dev
+    run_ignite_suite benchmarks.test_pme_free_switch 2.7.6
+    run_ignite_suite benchmarks.test_pme_free_switch dev
+}
+
+run_tests
 
 popd >/dev/null

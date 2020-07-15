@@ -15,13 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   # "
+MAVEN_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   # "
 
-. $SCRIPT_DIR/consts.sh
+. ${MAVEN_SCRIPT_DIR}/consts.sh
+. ${MAVEN_SCRIPT_DIR}/utils.sh
 
-pushd $SCRIPT_DIR/$TIDEN_PROVISION_DRIVER >/dev/null
+log_info "Running $(basename $0)"
 
-./fetch-artifacts.sh
-./up.sh
+pushd ${MAVEN_SCRIPT_DIR}/${TIDEN_PROVISION_DRIVER} >/dev/null
+
+. ${MAVEN_SCRIPT_DIR}/${TIDEN_PROVISION_DRIVER}/fetch-artifacts.sh
+. ${MAVEN_SCRIPT_DIR}/${TIDEN_PROVISION_DRIVER}/up.sh
 
 popd >/dev/null

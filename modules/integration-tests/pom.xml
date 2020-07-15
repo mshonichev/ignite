@@ -108,6 +108,36 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>clean-docker-images</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <executable>bash</executable>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>clean-docker-images</id>
+                                <phase>clean</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <commandlineArgs>./tiden/clean.sh</commandlineArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>

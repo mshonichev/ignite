@@ -18,7 +18,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # "
 
 . ${SCRIPT_DIR}/consts.sh
-
+. ${SCRIPT_DIR}/utils.sh
 export jdk_version=${JDK_VERSION/:/-}
 
 ## naive detection of user manual run - use Docker BuildKit for fancier output
@@ -33,7 +33,7 @@ main() {
   build_spark_image ${SPARK_VERSION}
   build_zookeeper_image ${ZOOKEEPER_VERSION}
   for ignite_version in ${PREV_IGNITE_VERSION}; do
-    build_ignite_image $ignite_version
+    build_ignite_image ${ignite_version}
   done
 }
 
@@ -64,7 +64,7 @@ tiden_get_sources_timestamp() {
     local current_timestamp=0
     for i in setup.py setup.cfg MANIFEST.in pyproject.toml requirements.txt tox.ini src/tiden/__version__.py; do
       if [ -f ${TIDEN_SOURCES_DIR}/$i ]; then
-        current_timestamp=$(stat -c %Y ${TIDEN_SOURCES_DIR}/$i 2>/dev/null)
+        current_timestamp=$(stat_c ${TIDEN_SOURCES_DIR}/$i 2>/dev/null)
         if [ ! "$current_timestamp" = "" ]; then
           if [ ${current_timestamp} -gt ${max_timestamp} ]; then
             max_timestamp=${current_timestamp}
@@ -82,7 +82,7 @@ get_sources_timestamp() {
     local current_timestamp=0
     sources_path="${1}"
     for i in ${sources_path}/*; do
-      current_timestamp=$(stat -c %Y ${sources_path}/$i 2>/dev/null)
+      current_timestamp=$(stat_c ${sources_path}/$i 2>/dev/null)
       if [ ! "$current_timestamp" = "" ]; then
         if [ ${current_timestamp} -gt ${max_timestamp} ]; then
           max_timestamp=${current_timestamp}
@@ -104,33 +104,6 @@ get_sources_timestamp() {
   echo ${max_timestamp}
 }
 
-have_docker_image() {
-  local image_name="${1}"
-  [ ! "${image_name}" = "" ] \
-  && [ $(docker images -f reference="${image_name}" -q | wc -l) -gt 0 ]
-}
-
-have_docker_container() {
-  local container_name="${1}"
-  docker container inspect ${container_name} >/dev/null 2>/dev/null
-}
-
-stop_and_remove_container() {
-  local container_name="${1}"
-
-  if have_docker_container ${container_name}; then
-      docker stop ${container_name} >/dev/null 2>/dev/null \
-      && docker rm ${container_name} >/dev/null 2>/dev/null
-  fi
-}
-
-remove_docker_image() {
-  local image_name="${1}"
-  if have_docker_image ${image_name}; then
-    docker rmi ${image_name} >/dev/null 2>/dev/null
-  fi
-}
-
 build_tiden_develop_image() {
   # First detect if any of setup files was changed in order to trigger rebuild only if necessary.
   #
@@ -150,7 +123,7 @@ build_tiden_develop_image() {
   fi
 
   if [ ${need_rebuild} -eq 1 ]; then
-    echo "INFO: Rebuilding 'tiden-master:develop' image"
+    log_info "Rebuilding 'tiden-master:develop' image"
 
     stop_and_remove_container tiden-master-builder
     remove_docker_image tiden-master-builder
@@ -206,12 +179,12 @@ have_timestamp_arg() {
 
 build_image() {
   local image_base_dir="${1}"
-  if [ "$image_base_dir" = "" ]; then
+  if [ "${image_base_dir}" = "" ]; then
     echo "ERROR: must give image base directory"
     exit 1
   fi
-  if [ ! -d $image_base_dir ]; then
-    echo "ERROR: unknown image directory $image_base_dir"
+  if [ ! -d ${image_base_dir} ]; then
+    echo "ERROR: unknown image directory ${image_base_dir}"
     exit 1
   fi
   shift
@@ -222,7 +195,7 @@ build_image() {
     shift
   fi
 
-  pushd $image_base_dir >/dev/null
+  pushd ${image_base_dir} >/dev/null
   local need_rebuild=1
   local sources_timestamp=$(get_sources_timestamp .)
 
@@ -237,7 +210,7 @@ build_image() {
   fi
 
   if [ $need_rebuild -eq 1 ]; then
-      echo "INFO: building image '$image_tag'"
+      log_info "building image '$image_tag'"
 
       local timestamp="--build-arg TIDEN_IMAGE_TIMESTAMP=${sources_timestamp}"
       if have_timestamp_arg "${@}"; then
@@ -247,9 +220,9 @@ build_image() {
       docker \
         build \
           -t ${image_tag} \
-          --build-arg USERUID="$(id -u)" \
-          --build-arg USERGID="$(id -g)" \
-          $timestamp \
+          --build-arg USERUID="$(user_uid)" \
+          --build-arg USERGID="$(user_gid)" \
+          ${timestamp} \
           "${@}" .
 
   fi
@@ -260,13 +233,13 @@ build_artifact_image() {
   local ARTIFACT_NAME="${1}"
   local ARTIFACT_VERSION="${2}"
 
-  if [ "$ARTIFACT_NAME" = "" ]; then
+  if [ "${ARTIFACT_NAME}" = "" ]; then
     echo "ERROR: must specify ARTIFACT_NAME"
     exit 1
   fi
 
-  if [ "$ARTIFACT_VERSION" = "" ]; then
-    echo "ERROR: must specify ARTIFACT_VERSION for artifact '$ARTIFACT_NAME'"
+  if [ "${ARTIFACT_VERSION}" = "" ]; then
+    echo "ERROR: must specify ARTIFACT_VERSION for artifact '${ARTIFACT_NAME}'"
     exit 1
   fi
 

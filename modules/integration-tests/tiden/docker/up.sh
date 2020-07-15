@@ -18,6 +18,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # "
 
 . ${SCRIPT_DIR}/consts.sh
+. ${SCRIPT_DIR}/utils.sh
 export jdk_version=${JDK_VERSION/:/-}
 
 main() {
@@ -49,18 +50,12 @@ prepare_config_directory() {
   cp -f ${IGNITE_SOURCE_DIR}/modules/integration-tests/tiden/docker/config/* ${TIDEN_CONFIG_DIR}/
 }
 
-have_volume() {
-  local volume_name="${1}"
-
-  docker volume inspect ${volume_name} >/dev/null 2>/dev/null
-}
-
 prepare_artifact() {
   local artifact_name="${1}"
   local artifact_version="${2}"
   local artifact_volume_name="${3}"
   if ! have_volume "tiden-artifacts-${artifact_name}-${artifact_version}"; then
-      echo "INFO: preparing artifact: ${artifact_name} ${artifact_version}"
+      log_info "preparing artifact: ${artifact_name} ${artifact_version}"
 
       if [ "$artifact_volume_name" = "" ]; then
         artifact_volume_name="tiden-artifacts-${artifact_name}-${artifact_version}"
@@ -76,13 +71,13 @@ prepare_artifact() {
 
 destroy_network() {
   if docker network inspect tiden &>/dev/null; then
-    echo "INFO: destroying Tiden network"
+    log_info "destroying Tiden network"
     docker network rm tiden >/dev/null
   fi
 }
 
 create_network() {
-  echo "INFO: creating Tiden network"
+  log_info "creating Tiden network"
   docker network create tiden >/dev/null
 }
 
@@ -97,7 +92,7 @@ tiden_artifacts() {
 
 stop_master() {
   if docker container inspect tiden-master &>/dev/null; then
-    echo "INFO: destroying Tiden master"
+    log_info "destroying Tiden master"
     docker stop tiden-master >/dev/null
     docker rm tiden-master >/dev/null
   fi
@@ -106,18 +101,18 @@ stop_master() {
 stop_slaves() {
   local container_names=$(docker ps -f name=tiden-slave --format '{{.Names}}' -q -a)
   if [ ! "$container_names" = "" ]; then
-    echo "INFO: destroying Tiden slaves"
+    log_info "destroying Tiden slaves"
     docker stop $container_names >/dev/null
     docker rm $container_names >/dev/null
   fi
 }
 
 run_master() {
-  echo "INFO: running Tiden master"
+  log_info "running Tiden master"
   local tiden_sources_volume=""
   if [ "$TIDEN_VERSION" = "develop" ]; then
     if [ "$TIDEN_SOURCES_DIR" = "" -o ! -d "$TIDEN_SOURCES_DIR" ]; then
-      echo "ERROR: to run 'develop' version of Tiden, you must set TIDEN_SOURCES_DIR shell variable"
+      log_error "to run 'develop' version of Tiden, you must set TIDEN_SOURCES_DIR shell variable"
       exit 1
     fi
     tiden_sources_volume="-v $TIDEN_SOURCES_DIR:/src"
@@ -148,10 +143,10 @@ run_slaves() {
   local app_mode="${2}"
   local slave_num="${3}"
   if [ "$slave_num" = "" ]; then
-    echo "ERROR: slave_num must be > 0"
+    log_error "slave_num must be > 0"
     exit 1
   fi
-  echo "INFO: running $slave_num Tiden slave(s) for '$app_name' $app_mode with JDK '${jdk_version}'"
+  log_info "running $slave_num Tiden slave(s) for '$app_name' $app_mode with JDK '${jdk_version}'"
   slave_image="tiden-slave:${jdk_version}"
   slave_ips=""
   for i in $(seq 1 $slave_num); do

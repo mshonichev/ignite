@@ -44,7 +44,11 @@ build_tiden_images() {
   if [ "${TIDEN_VERSION}" = "develop" ]; then
     build_tiden_develop_image
   else
-    build_image tiden-master tiden-master:${TIDEN_VERSION} --build-arg TIDEN_VERSION=${TIDEN_VERSION}
+    local no_cache=''
+    if [ "${TIDEN_VERSION}" = "latest" ]; then
+        no_cache='--no-cache'
+    fi
+    build_image tiden-master tiden-master:${TIDEN_VERSION} --build-arg TIDEN_VERSION=${TIDEN_VERSION} ${no_cache}
   fi
   build_image tiden-slave tiden-slave:${jdk_version} --build-arg JDK_VERSION=${JDK_VERSION}
 }
@@ -177,6 +181,16 @@ have_timestamp_arg() {
     return 1
 }
 
+have_no_cache_arg() {
+    while [ $# -gt 0 ]; do
+        if [ "$1" == "--no-cache" ]; then
+            return 0
+        fi
+        shift
+    done
+    return 1
+}
+
 build_image() {
   local image_base_dir="${1}"
   if [ "${image_base_dir}" = "" ]; then
@@ -200,11 +214,13 @@ build_image() {
   local sources_timestamp=$(get_sources_timestamp .)
 
   if have_docker_image ${image_tag}; then
-    local image_timestamp=$(tiden_image_timestamp ${image_tag})
+    if ! have_no_cache_arg "${@}"; then
+      local image_timestamp=$(tiden_image_timestamp ${image_tag})
 
-    if [ ! "${image_timestamp}" = "" ]; then
-      if [ ${image_timestamp} -ge ${sources_timestamp} ]; then
-        need_rebuild=0
+      if [ ! "${image_timestamp}" = "" ]; then
+        if [ ${image_timestamp} -ge ${sources_timestamp} ]; then
+          need_rebuild=0
+        fi
       fi
     fi
   fi

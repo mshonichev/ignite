@@ -180,11 +180,11 @@ have_timestamp_arg() {
 build_image() {
   local image_base_dir="${1}"
   if [ "${image_base_dir}" = "" ]; then
-    echo "ERROR: must give image base directory"
+    log_error "must give image base directory"
     exit 1
   fi
   if [ ! -d ${image_base_dir} ]; then
-    echo "ERROR: unknown image directory ${image_base_dir}"
+    log_error "unknown image directory ${image_base_dir}"
     exit 1
   fi
   shift
@@ -234,12 +234,12 @@ build_artifact_image() {
   local ARTIFACT_VERSION="${2}"
 
   if [ "${ARTIFACT_NAME}" = "" ]; then
-    echo "ERROR: must specify ARTIFACT_NAME"
+    log_error "must specify ARTIFACT_NAME"
     exit 1
   fi
 
   if [ "${ARTIFACT_VERSION}" = "" ]; then
-    echo "ERROR: must specify ARTIFACT_VERSION for artifact '${ARTIFACT_NAME}'"
+    log_error "must specify ARTIFACT_VERSION for artifact '${ARTIFACT_NAME}'"
     exit 1
   fi
 

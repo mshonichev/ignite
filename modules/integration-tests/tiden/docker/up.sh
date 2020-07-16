@@ -82,11 +82,15 @@ create_network() {
 }
 
 tiden_artifacts() {
-  local artifact_volumes="-v $IGNITE_SOURCE_DIR:/opt/ignite-dev"
+  local opt='ro'
+  if [ "$osname" = "Darwin" ]; then
+    opt="$opt,delegated"
+  fi
+  local artifact_volumes="-v $IGNITE_SOURCE_DIR:/opt/ignite-dev:${opt}"
   for ignite_version in $PREV_IGNITE_VERSION; do
-    artifact_volumes="$artifact_volumes -v tiden-artifacts-ignite-$ignite_version:/opt/ignite-${ignite_version}"
+    artifact_volumes="$artifact_volumes -v tiden-artifacts-ignite-$ignite_version:/opt/ignite-${ignite_version}:${opt}"
   done
-  artifact_volumes="$artifact_volumes -v tiden-artifacts-spark-$SPARK_VERSION:/opt/spark-$SPARK_VERSION"
+  artifact_volumes="$artifact_volumes -v tiden-artifacts-spark-$SPARK_VERSION:/opt/spark-$SPARK_VERSION:${opt}"
   echo $artifact_volumes
 }
 
@@ -108,7 +112,7 @@ stop_slaves() {
 }
 
 run_master() {
-  log_info "running Tiden master"
+  log_info "running Tiden master '${TIDEN_VERSION}'"
   local tiden_sources_volume=""
   if [ "$TIDEN_VERSION" = "develop" ]; then
     if [ "$TIDEN_SOURCES_DIR" = "" -o ! -d "$TIDEN_SOURCES_DIR" ]; then

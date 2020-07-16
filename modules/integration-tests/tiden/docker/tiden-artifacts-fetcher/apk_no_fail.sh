@@ -15,6 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)" # "
+
+. ${SCRIPT_DIR}/utils.sh
+
 # simple script to retry apk command due to there's well-known issues with Alpine CDN
 
 n_tries=0
@@ -25,11 +29,11 @@ while true; do
     if [ $res -eq 0 ]; then
         break
     fi
-    echo "WARN: retrying after 3 sec"
+    log_warn "retrying after 3 sec"
     sleep 3
     n_tries=$((n_tries + 1))
     if [ $n_tries -ge $max_tries ]; then
-        echo "ERROR: apk fails to execute '${@}' after $max_tries retries"
+        log_error "apk fails to execute '${@}' after $max_tries retries"
         exit 1
     fi
 done

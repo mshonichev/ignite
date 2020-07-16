@@ -15,14 +15,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # "
+log_print() {
+    echo -en $1
+    shift
+    echo " ${@}"
+}
 
-. ${SCRIPT_DIR}/utils.sh
+no_colors() {
+    [ ! "${TEAMCITY_PROJECT_NAME:-}" = "" ]
+}
 
-if [ ! -d /src -o ! -f /src/setup.py ]; then
-    log_error "for building 'develop' version please mount Tiden source directory to '/src' volume";
-    exit 1;
-else
-    cd /src;
-    python3.7 setup.py develop
-fi
+log_info() {
+    if no_colors; then
+        log_print "[INFO]" "${@}"
+    else
+        log_print "[\033[1;34mINFO\033[0m]" "${@}"
+    fi
+}
+
+log_error() {
+    if no_colors; then
+        log_print "[ERROR]" "${@}"
+    else
+        log_print "[\033[1;31mERROR\033[0m]" "${@}"
+    fi
+}
+
+log_warn() {
+    if no_colors; then
+        log_print "[WARNING]" "${@}"
+    else
+        log_print "[\033[1;33mWARNING\033[0m]" "${@}"
+    fi
+}

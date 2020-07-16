@@ -17,7 +17,9 @@ FROM tiden-base
 
 VOLUME ["/src"]
 
-COPY install_develop.sh /opt/
+ENV TEAMCITY_PROJECT_NAME=''
+
+COPY *.sh /opt/
 
 RUN pip3.7 \
         install -U \

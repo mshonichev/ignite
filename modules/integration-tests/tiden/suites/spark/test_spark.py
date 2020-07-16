@@ -26,7 +26,7 @@ from suites.version import IgniteVersion
 
 class TestSpark(AppTestCase):
 
-    NUM_NODES = 4
+    NUM_NODES = 2
     PRELOAD_TIMEOUT = 60
     DATA_AMOUNT = 1000000
     REBALANCE_TIMEOUT = 60
@@ -34,6 +34,8 @@ class TestSpark(AppTestCase):
     ignite: Ignite = property(lambda self: self.get_app('ignite'), None)
     ignite_artifact = property(lambda self: self.tiden.config['artifacts'][self.ignite.name], None)
     ignite_version: IgniteVersion = property(lambda self: IgniteVersion(self.tiden.config['test_ignite_version']), None)
+
+    spark: Spark = property(lambda self: self.get_app('spark'), None)
 
     data_generation_client: Igniteaware = property(lambda self: self.get_app('data_generation'), None)
 
@@ -43,13 +45,11 @@ class TestSpark(AppTestCase):
         self.add_app(
             'ignite',
             artifact_name='ignite-' + str(self.ignite_version),
-            num_nodes=self.NUM_NODES - 1
+            num_nodes=self.NUM_NODES
         )
         self.add_app(
-            'data_generation',
-            artifact_name='igniteaware',
-            app_class_name='igniteaware',
-            java_class_name="org.apache.ignite.internal.ducktest.DataGenerationApplication",
+            'spark',
+            num_nodes=2,
         )
 
     def setup(self):

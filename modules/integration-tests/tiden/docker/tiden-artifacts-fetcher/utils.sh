@@ -15,13 +15,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+log_print() {
+    echo -en $1
+    shift
+    echo " ${@}"
+}
+
+no_colors() {
+    [ ! "${TEAMCITY_PROJECT_NAME:-}" = "" ]
+}
+
+log_info() {
+    if no_colors; then
+        log_print "[INFO]" "${@}"
+    else
+        log_print "[\033[1;34mINFO\033[0m]" "${@}"
+    fi
+}
+
+log_error() {
+    if no_colors; then
+        log_print "[ERROR]" "${@}"
+    else
+        log_print "[\033[1;31mERROR\033[0m]" "${@}"
+    fi
+}
+
+log_warn() {
+    if no_colors; then
+        log_print "[WARNING]" "${@}"
+    else
+        log_print "[\033[1;33mWARNING\033[0m]" "${@}"
+    fi
+}
+
 fetch_artifact() {
     local ARTIFACT_ARCHIVE_NAME="${1}"
     local ARTIFACT_BASE_URL="${2}"
     local ARTIFACT_NAME="${3}"
     local ARTIFACT_VERSION="${4}"
 
-    echo "INFO: Fetching $ARTIFACT_BASE_URL/$ARTIFACT_ARCHIVE_NAME"
+    log_info "Fetching $ARTIFACT_BASE_URL/$ARTIFACT_ARCHIVE_NAME"
 
     wget \
         -t 5 \
@@ -31,7 +65,7 @@ fetch_artifact() {
         ${ARTIFACT_BASE_URL}/$ARTIFACT_ARCHIVE_NAME
 
     if [ $? -ne 0 ]; then
-        echo "ERROR: failed to download!"
+        log_error "failed to download!"
         exit 1
     fi
 
@@ -53,12 +87,12 @@ fetch_artifact() {
           && rm -rf /opt/${archive_name}
           ;;
         *)
-          echo "ERROR: Unknown archive type: '$archive_ext'"
+          log_error "Unknown archive type: '$archive_ext'"
           exit 1
           ;;
     esac
     if [ $? -ne 0 ]; then
-        echo "ERROR: failed to unpack ${ARTIFACT_ARCHIVE_NAME}"
+        log_error "failed to unpack ${ARTIFACT_ARCHIVE_NAME}"
         exit 1
     fi
     rm -f ${ARTIFACT_ARCHIVE_NAME}
